@@ -24,7 +24,7 @@ void test_insert_single(const key_t key)
   // assert(p->color == RBTREE_BLACK);  // color of root node should be black
   assert(p->left == NULL);
   assert(p->right == NULL);
-  assert(p->parent == NULL);
+  assert(p->parent == NULL); // 오잉?
   delete_rbtree(t);
 }
 
@@ -272,7 +272,7 @@ void test_minmax_suite()
 int main(void)
 {
   test_init();
-  // test_insert_single(1024);
+  test_insert_single(1024);
   // test_find_single(512, 1024);
   // test_erase_root(128);
   // test_minmax_suite();
