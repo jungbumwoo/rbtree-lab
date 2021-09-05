@@ -16,8 +16,20 @@ void delete_rbtree(rbtree *t)
 
 node_t *rbtree_insert(const rbtree *t, const key_t key)
 {
-  // TODO: implement insert
-  return t->root;
+  rbtree *temp_t = t;
+  if (t->root == NULL)
+  {
+    temp_t->root = (rbtree *)calloc(sizeof(rbtree), 1);
+  }
+
+  node_t *new = (node_t *)malloc(sizeof(node_t));
+  new->parent = new->left = new->right = NULL;
+  new->key = key;
+  new->color = RBTREE_RED;
+
+  t->root->left = new;
+
+  return new;
 }
 
 node_t *rbtree_find(const rbtree *t, const key_t key)

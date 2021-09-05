@@ -16,7 +16,6 @@ void test_init(void)
 // root node should have proper values and pointers
 void test_insert_single(const key_t key)
 {
-  printf("check");
   rbtree *t = new_rbtree();
   node_t *p = rbtree_insert(t, key);
   assert(p != NULL);
@@ -273,7 +272,7 @@ void test_minmax_suite()
 int main(void)
 {
   test_init();
-  // test_insert_single(1024);
+  test_insert_single(1024);
   // test_find_single(512, 1024);
   // test_erase_root(128);
   // test_minmax_suite();
