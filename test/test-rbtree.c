@@ -24,8 +24,7 @@ void test_insert_single(const key_t key)
   //////// assert(p->color == RBTREE_BLACK);  // color of root node should be black
   assert(p->left == NULL);
   assert(p->right == NULL);
-  assert(p->parent == NULL); // 오잉?
-  assert(t->root->left == p);
+  assert(p->parent == NULL);
   delete_rbtree(t);
 }
 

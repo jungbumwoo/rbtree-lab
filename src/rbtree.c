@@ -23,6 +23,7 @@ node_t *rbtree_insert(const rbtree *t, const key_t key)
   if (t->root == NULL)
   {
     virtual_t->root = (node_t *)calloc(sizeof(node_t), 1);
+    t->root->color = RBTREE_BLACK;
   }
 
   node_t *curr, *p, *gp, *ggp;
@@ -64,18 +65,18 @@ node_t *rbtree_insert(const rbtree *t, const key_t key)
   }
 
   // while
-
-  node_t *temp = (node_t *)malloc(sizeof(node_t));
-  temp->left = temp->right = NULL;
-  temp->key = key;
-  temp->color = RBTREE_RED;
+  node_t *curr = (node_t *)malloc(sizeof(node_t));
+  curr->left = curr->right = NULL;
+  curr->key = key;
+  curr->color = RBTREE_RED;
 
   if (key > p->key && p != t->root)
-    p->right = temp;
+    p->right = curr;
   else
-    p->left = temp;
+    p->left = curr;
 
   // 부모가 빨강이면 회전!
+
   if (p->color == RBTREE_RED)
   {
     gp->color = RBTREE_RED;
