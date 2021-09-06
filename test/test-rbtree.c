@@ -56,7 +56,7 @@ void test_erase_root(const key_t key)
   assert(p->key == key);
 
   rbtree_erase(t, p);
-  assert(t->root == NULL);
+  assert(t->root->left == NULL); // jb의 수정부분
 
   delete_rbtree(t);
 }
@@ -275,7 +275,7 @@ int main(void)
   test_init();
   test_insert_single(1024);
   test_find_single(512, 1024);
-  // test_erase_root(128);
+  test_erase_root(128);
   // test_minmax_suite();
   // test_distinct_values();
   // test_duplicate_values();

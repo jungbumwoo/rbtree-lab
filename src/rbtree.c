@@ -139,6 +139,74 @@ int rbtree_erase(rbtree *t, node_t *p)
   node_t *delgp, *delp, *del, *sib;
   key_t value = p->key;
   delgp = delp = t->root;
+  del = t->root->left;
+  sib = 0; // sib = NULL??
+  while (!isLeafNode(del))
+  {
+    if (del->color != RBTREE_RED)
+    {
+      if (redAsParent(t, delgp, delp, sib))
+      {
+        // delgp 와 sib의 위치가 변했다. 새로 수정
+        delgp = sib;
+        if (del->key > delp->key || del->key == delp->key)
+          sib = delp->left;
+        else
+          sib = delp->right;
+      }
+    }
+    if (del != t->root->left && is2Node(del))
+    {
+      // root 가 아니고 2노드이면 부풀려줘야함
+      if (!borrowKey(t, delgp, delp, del, sib))
+        bindNode(delp);
+    }
+
+    if (value == del->key)
+      value = swapKey(del);
+
+    delgp = delp;
+    delp = del;
+    if (value > del->key || value == del->key)
+    {
+      // swapkey로 인해 같은 값이 나올 수 있음.
+      // In-order successor를 사용하기 때문에 오른쪽으로
+      sib = del->left;
+      del = del->right;
+    }
+    else
+    {
+      sib = del->right;
+      del = del->left;
+    }
+    if (del->color != RBTREE_RED)
+    { // del 이 black 이면 rotation
+      if (redAsParent(t, delgp, delp, sib))
+      {
+        // delgp 와 sib의 위치가 변했다. 새로 수정
+        delgp = sib;
+        if (del->key > delp->key || del->key == delp->key)
+          sib = delp->left;
+        else
+          sib = delp->right;
+      }
+    }
+    if (del != t->root->left && is2Node(del))
+    {
+      if (!borrowKey(t, delgp, delp, del, sib))
+        bindNode(delp);
+    }
+
+    if (delLeafNode(t, value, delp, del))
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+  }
+
   return 0;
 }
 
