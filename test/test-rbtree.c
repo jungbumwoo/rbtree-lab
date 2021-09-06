@@ -25,6 +25,7 @@ void test_insert_single(const key_t key)
   assert(p->left == NULL);
   assert(p->right == NULL);
   assert(p->parent == NULL); // 오잉?
+  assert(t->root->left == p);
   delete_rbtree(t);
 }
 
