@@ -5,6 +5,8 @@
 /* functions */
 node_t *rotate(const rbtree *t, const key_t key, node_t *pivot);
 
+/* */
+
 rbtree *new_rbtree(void)
 {
   rbtree *p = (rbtree *)calloc(sizeof(rbtree), 1);
@@ -17,12 +19,11 @@ void delete_rbtree(rbtree *t)
   free(t);
 }
 
-node_t *rbtree_insert(const rbtree *t, const key_t key)
+node_t *rbtree_insert(rbtree *t, const key_t key)
 {
-  rbtree *virtual_t = t;
   if (t->root == NULL)
   {
-    virtual_t->root = (node_t *)calloc(sizeof(node_t), 1);
+    t->root = (node_t *)calloc(sizeof(node_t), 1);
     t->root->color = RBTREE_BLACK;
   }
 
@@ -33,7 +34,7 @@ node_t *rbtree_insert(const rbtree *t, const key_t key)
   while (curr)
   {
     if (key == curr->key)
-      return false; // return false 말고 다른거 리턴해줘야하나? 중복방지
+      return NULL; // return false 말고 다른거 리턴해줘야하나? 중복방지
 
     // 자식 노드 둘 다 있고 빨강이면 color promotion
     if (curr->left && curr->right && curr->left->color == RBTREE_RED && curr->right->color == RBTREE_RED)
@@ -65,7 +66,7 @@ node_t *rbtree_insert(const rbtree *t, const key_t key)
   }
 
   // while
-  node_t *curr = (node_t *)malloc(sizeof(node_t));
+  curr = (node_t *)malloc(sizeof(node_t));
   curr->left = curr->right = NULL;
   curr->key = key;
   curr->color = RBTREE_RED;
@@ -94,8 +95,23 @@ node_t *rbtree_insert(const rbtree *t, const key_t key)
 
 node_t *rbtree_find(const rbtree *t, const key_t key)
 {
+  node_t *search_point;
+  // curr = (node_t *)t->root->left;
+  search_point = (node_t *)t->root->left;
+
+  while (search_point)
+  {
+    /* code */
+    if (key == search_point->key)
+      return search_point;
+
+    if (search_point->key > key)
+      search_point = search_point->right;
+    else
+      search_point = search_point->left;
+  }
   // TODO: implement find
-  return t->root;
+  return NULL;
 }
 
 node_t *rbtree_min(const rbtree *t)
@@ -110,7 +126,7 @@ node_t *rbtree_max(const rbtree *t)
   return t->root;
 }
 
-int rbtree_erase(const rbtree *t, node_t *p)
+int rbtree_erase(rbtree *t, node_t *p)
 {
   // TODO: implement erase
   return 0;

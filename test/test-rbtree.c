@@ -36,6 +36,7 @@ void test_find_single(const key_t key, const key_t wrong_key)
 
   node_t *q = rbtree_find(t, key);
   assert(q != NULL);
+
   assert(q->key == key);
   assert(q == p);
 
@@ -59,8 +60,8 @@ void test_erase_root(const key_t key)
 
   delete_rbtree(t);
 }
-
-static void insert_arr(const rbtree *t, const key_t *arr, const size_t n)
+// insert 여기도 const 빼줘야할거같은데ㅔ
+static void insert_arr(rbtree *t, const key_t *arr, const size_t n)
 {
   for (size_t i = 0; i < n; i++)
   {
@@ -273,7 +274,7 @@ int main(void)
 {
   test_init();
   test_insert_single(1024);
-  // test_find_single(512, 1024);
+  test_find_single(512, 1024);
   // test_erase_root(128);
   // test_minmax_suite();
   // test_distinct_values();
