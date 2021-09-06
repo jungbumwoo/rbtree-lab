@@ -5,6 +5,15 @@
 /* functions */
 node_t *rotate(const rbtree *t, const key_t key, node_t *pivot);
 
+/* romove func*/
+bool isLeafNode(const node_t *p);
+bool is2Node(const node_t *p);
+bool delLeafNode(const rbtree *t, key_t, node_t *delp, node_t *del);
+bool redAsParent(const rbtree *t, node_t *delgp, node_t *delp, node_t *sib);
+key_t swapKey(node_t *del);
+bool borrowKey(const rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib);
+void bindNode(node_t *delp);
+void removeSubtree(node_t *pNode);
 /* */
 
 rbtree *new_rbtree(void)
@@ -65,7 +74,6 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
       curr = curr->left;
   }
 
-  // while
   curr = (node_t *)malloc(sizeof(node_t));
   curr->left = curr->right = NULL;
   curr->key = key;
@@ -128,7 +136,9 @@ node_t *rbtree_max(const rbtree *t)
 
 int rbtree_erase(rbtree *t, node_t *p)
 {
-  // TODO: implement erase
+  node_t *delgp, *delp, *del, *sib;
+  key_t value = p->key;
+  delgp = delp = t->root;
   return 0;
 }
 
@@ -166,3 +176,149 @@ node_t *rotate(const rbtree *t, const key_t key, node_t *pivot)
 
   return gchild;
 }
+
+bool isLeafNode(const node_t *p)
+{
+  if (p == 0) // null ? 0 ??
+    return false;
+  if ((p->left == 0 || (p->left && p->left->color == RBTREE_RED && !p->left->left && !p->left->right)) &&
+      (p->right == 0 || (p->right && p->right->color == RBTREE_RED && !p->right->left && !p->right->right)))
+    return true;
+  else
+    return false;
+}
+
+bool is2Node(const node_t *p)
+{
+  if (p == 0)
+    return false;
+  if (p->color == RBTREE_RED)
+    return false;
+  if ((p->left == 0 && p->right == 0) || (p->left && p->right && p->left->color != RBTREE_RED && p->right->color != RBTREE_RED))
+    return true;
+  else
+    return false;
+}
+bool redAsParent(const rbtree *t, node_t *delgp, node_t *delp, node_t *sib)
+{
+  if (sib == 0 || sib->color != RBTREE_RED)
+    return false;
+  rotate(t, sib->key, delgp);
+  sib->color = RBTREE_BLACK;
+  delp->color = RBTREE_RED;
+  return true;
+}
+
+bool borrowKey(const rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib)
+{
+  node_t *sibrc;
+  if (is2Node(sib))
+    return false;
+  if (del->key > sib->key)
+  {
+    if (sib->left && sib->left->color == RBTREE_RED)
+      sibrc = sib->left;
+    else // 이거 다른 조건 이나 색깔 생각 안하고 그냥 오른쪽이라고 찍어도 되는건가ㅏ
+      sibrc = sib->right;
+  }
+  else
+  {
+    if (sib->right && sib->right->color == RBTREE_RED)
+      sibrc = sib->right;
+    else // 이거 다른 조건 이나 색깔 생각 안하고 그냥 왼쪽이라고 찍어도 되는건가ㅏ
+      sibrc = sib->left;
+  }
+
+  if ((delp->key > sib->key) != (sib->key > sibrc->key))
+  {
+    // double rotation
+    rotate(t, sibrc->key, delp);
+    rotate(t, sibrc->key, delgp);
+    sib->color = RBTREE_BLACK;
+    sibrc->color = RBTREE_RED;
+  }
+  else
+  {
+    // single rotation
+    rotate(t, sib->key, delgp);
+    sib->color = RBTREE_RED;
+    sibrc->color = RBTREE_BLACK;
+  }
+  del->color = RBTREE_RED;
+  delp->color = RBTREE_BLACK;
+
+  if (t->root->left->color == RBTREE_RED)
+    t->root->left->color = RBTREE_BLACK;
+  return true;
+}
+
+void bindNode(node_t *delp)
+{
+  delp->color = RBTREE_BLACK;
+  delp->left->color = RBTREE_RED;
+  delp->right->color = RBTREE_RED;
+}
+
+key_t swapKey(node_t *del)
+{
+  node_t *cdd;
+  cdd = del->right;
+  while (cdd->left)
+    cdd = cdd->left;
+  del->key = cdd->key;
+  return cdd->key;
+}
+
+bool delLeafNode(const rbtree *t, key_t key, node_t *delp, node_t *del)
+{
+  if (key == del->key && !del->left && !del->right)
+  {
+    // (no child)
+    free(del);
+    if ((key > delp->key || key == delp->key) && delp != t->root)
+      delp->right = NULL;
+    else
+      delp->left = NULL;
+    return true;
+  }
+  else if (key == del->key) // del = black, tow children = red
+  {
+    node_t *ret;
+    if (del->left)
+    {
+      del->left->right = del->right;
+      ret = del->left;
+      ret->color = RBTREE_BLACK;
+      free(del);
+    }
+    else if (del->right)
+    {
+      del->right->left = del->left; // del->left가 있으면 바로 위의 가정법이 실행되는거아니려나..?
+      ret = del->right;
+      ret->color = RBTREE_BLACK;
+      free(del);
+    }
+    if ((ret->key > delp->key || ret->key == delp->key) && delp != t->root)
+      delp->right = ret;
+    else
+      delp->left = ret;
+    return true;
+  }
+  else if (del->left && key == del->left->key)
+  {
+    free(del->left);
+    del->left = NULL;
+    return true;
+  }
+  else if (del->right && key == del->right->key)
+  {
+    free(del->right);
+    del->right = NULL;
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+// void removeSubtree(node_t *pNode);
