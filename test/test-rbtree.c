@@ -21,10 +21,12 @@ void test_insert_single(const key_t key)
   assert(p != NULL);
   assert(t->root != p);
   assert(p->key == key);
-  //////// assert(p->color == RBTREE_BLACK);  // color of root node should be black
+  // assert(p->color == RBTREE_BLACK); // color of root node should be black
   assert(p->left == NULL);
   assert(p->right == NULL);
-  assert(p->parent == NULL); // 오잉?
+  assert(p->parent == NULL);  // 오잉?
+  assert(t->root->left == p); // 이건 내가 추가로 넣어준거임. 코치님꺼가 아니라. 하나만 넣고 확인용이라 삭제해야함
+  printf("muyaho");
   delete_rbtree(t);
 }
 
