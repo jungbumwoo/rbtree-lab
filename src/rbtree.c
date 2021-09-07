@@ -3,15 +3,24 @@
 #include <stdbool.h> // import false
 
 /* functions */
-node_t *rotate(const rbtree *t, const key_t key, node_t *pivot);
+node_t *rotate(rbtree *t, const key_t key, node_t *pivot);
+void deleteAll(node_t *p)
+{
+  if (p != NULL)
+  {
+    deleteAll(p->left);
+    deleteAll(p->right);
+    free(p);
+  }
+}
 
 /* romove func*/
 bool isLeafNode(const node_t *p);
 bool is2Node(const node_t *p);
-bool delLeafNode(const rbtree *t, key_t, node_t *delp, node_t *del);
-bool redAsParent(const rbtree *t, node_t *delgp, node_t *delp, node_t *sib);
+bool delLeafNode(rbtree *t, key_t, node_t *delp, node_t *del);
+bool redAsParent(rbtree *t, node_t *delgp, node_t *delp, node_t *sib);
 key_t swapKey(node_t *del);
-bool borrowKey(const rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib);
+bool borrowKey(rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib);
 void bindNode(node_t *delp);
 void removeSubtree(node_t *pNode);
 /* */
@@ -25,6 +34,7 @@ rbtree *new_rbtree(void)
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
+  deleteAll(t->root);
   free(t);
 }
 
@@ -96,7 +106,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   }
 
   // root는 항상 검정으로
-  t->root->left->color = RBTREE_RED;
+  t->root->left->color = RBTREE_BLACK;
 
   return curr;
 }
@@ -125,13 +135,31 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
 node_t *rbtree_min(const rbtree *t)
 {
   // TODO: implement find
-  return t->root;
+  node_t *min_pointer;
+  min_pointer = t->root->left;
+
+  while (min_pointer && min_pointer->left)
+  {
+    /* code */
+    min_pointer = min_pointer->left;
+  }
+
+  return min_pointer;
 }
 
 node_t *rbtree_max(const rbtree *t)
 {
   // TODO: implement find
-  return t->root;
+  node_t *max_pointer;
+  max_pointer = t->root->left;
+
+  while (max_pointer && max_pointer->right)
+  {
+    /* code */
+    max_pointer = max_pointer->right;
+  }
+
+  return max_pointer;
 }
 
 int rbtree_erase(rbtree *t, node_t *p)
@@ -141,11 +169,11 @@ int rbtree_erase(rbtree *t, node_t *p)
   delgp = delp = t->root;
   del = t->root->left;
   sib = 0; // sib = NULL??
-  while (!isLeafNode(del))
+  while (isLeafNode(del) == false)
   {
-    if (del->color != RBTREE_RED)
+    if (del->color == RBTREE_BLACK)
     {
-      if (redAsParent(t, delgp, delp, sib))
+      if (redAsParent(t, delgp, delp, sib) == true)
       {
         // delgp 와 sib의 위치가 변했다. 새로 수정
         delgp = sib;
@@ -155,10 +183,10 @@ int rbtree_erase(rbtree *t, node_t *p)
           sib = delp->right;
       }
     }
-    if (del != t->root->left && is2Node(del))
+    if (del != t->root->left && is2Node(del) == true)
     {
       // root 가 아니고 2노드이면 부풀려줘야함
-      if (!borrowKey(t, delgp, delp, del, sib))
+      if (borrowKey(t, delgp, delp, del, sib) == false)
         bindNode(delp);
     }
 
@@ -179,35 +207,34 @@ int rbtree_erase(rbtree *t, node_t *p)
       sib = del->right;
       del = del->left;
     }
-    if (del->color != RBTREE_RED)
-    { // del 이 black 이면 rotation
-      if (redAsParent(t, delgp, delp, sib))
-      {
-        // delgp 와 sib의 위치가 변했다. 새로 수정
-        delgp = sib;
-        if (del->key > delp->key || del->key == delp->key)
-          sib = delp->left;
-        else
-          sib = delp->right;
-      }
-    }
-    if (del != t->root->left && is2Node(del))
+  }
+  // while 문 종료
+  if (del->color == RBTREE_BLACK)
+  { // del 이 black 이면 rotation
+    if (redAsParent(t, delgp, delp, sib))
     {
-      if (!borrowKey(t, delgp, delp, del, sib))
-        bindNode(delp);
-    }
-
-    if (delLeafNode(t, value, delp, del))
-    {
-      return true;
-    }
-    else
-    {
-      return false;
+      // delgp 와 sib의 위치가 변했다. 새로 수정
+      delgp = sib;
+      if (del->key > delp->key || del->key == delp->key)
+        sib = delp->left;
+      else
+        sib = delp->right;
     }
   }
+  if (del != t->root->left && is2Node(del))
+  {
+    if (!borrowKey(t, delgp, delp, del, sib))
+      bindNode(delp);
+  }
 
-  return 0;
+  if (delLeafNode(t, value, delp, del))
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
@@ -217,7 +244,7 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
 }
 
 /* functions */
-node_t *rotate(const rbtree *t, const key_t key, node_t *pivot)
+node_t *rotate(rbtree *t, const key_t key, node_t *pivot)
 {
   node_t *child, *gchild;
   if ((key > pivot->key || key == pivot->key) && pivot != t->root)
@@ -235,7 +262,7 @@ node_t *rotate(const rbtree *t, const key_t key, node_t *pivot)
   {
     gchild = (node_t *)child->left;
     child->left = gchild->right;
-    gchild->right = child->left;
+    gchild->right = (node_t *)child;
   }
   if ((key > pivot->key || key == pivot->key) && pivot != t->root)
     pivot->right = gchild;
@@ -267,7 +294,7 @@ bool is2Node(const node_t *p)
   else
     return false;
 }
-bool redAsParent(const rbtree *t, node_t *delgp, node_t *delp, node_t *sib)
+bool redAsParent(rbtree *t, node_t *delgp, node_t *delp, node_t *sib)
 {
   if (sib == 0 || sib->color != RBTREE_RED)
     return false;
@@ -277,7 +304,7 @@ bool redAsParent(const rbtree *t, node_t *delgp, node_t *delp, node_t *sib)
   return true;
 }
 
-bool borrowKey(const rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib)
+bool borrowKey(rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib)
 {
   node_t *sibrc;
   if (is2Node(sib))
@@ -337,7 +364,7 @@ key_t swapKey(node_t *del)
   return cdd->key;
 }
 
-bool delLeafNode(const rbtree *t, key_t key, node_t *delp, node_t *del)
+bool delLeafNode(rbtree *t, key_t key, node_t *delp, node_t *del)
 {
   if (key == del->key && !del->left && !del->right)
   {
