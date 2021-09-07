@@ -2,17 +2,13 @@
 #include <malloc.h>
 #include <stdbool.h> // import false
 
+/* global */
+node_t *head;
+
 /* functions */
 node_t *rotate(rbtree *t, const key_t key, node_t *pivot);
-void deleteAll(node_t *p)
-{
-  if (p != NULL)
-  {
-    deleteAll(p->left);
-    deleteAll(p->right);
-    free(p);
-  }
-}
+void deleteAll(node_t *p);
+void *head_node_to_t_root(rbtree *t);
 
 /* romove func*/
 bool isLeafNode(const node_t *p);
@@ -34,7 +30,7 @@ rbtree *new_rbtree(void)
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
-  deleteAll(t->root);
+  deleteAll(head);
   free(t);
 }
 
@@ -43,17 +39,30 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   if (t->root == NULL)
   {
     t->root = (node_t *)calloc(sizeof(node_t), 1);
+    t->root->key = key;
     t->root->color = RBTREE_BLACK;
+    t->root->left = t->root->right = NULL;
+
+    // node_t *head_node;
+    head = malloc(sizeof(node_t));
+    head->left = t->root;
+    head->color = RBTREE_BLACK;
+    head->right = head->parent = NULL;
+
+    return t->root;
   }
 
   node_t *curr, *p, *gp, *ggp;
-  ggp = gp = p = (node_t *)t->root;
-  curr = (node_t *)t->root->left;
+  ggp = gp = p = (node_t *)head;
+  curr = (node_t *)head->left;
 
   while (curr)
   {
     if (key == curr->key)
+    {
+      head_node_to_t_root(t);
       return NULL; // return false 말고 다른거 리턴해줘야하나? 중복방지
+    }
 
     // 자식 노드 둘 다 있고 빨강이면 color promotion
     if (curr->left && curr->right && curr->left->color == RBTREE_RED && curr->right->color == RBTREE_RED)
@@ -72,7 +81,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
       }
 
       // 뿌리는 항상 검정
-      t->root->left->color = RBTREE_BLACK; // 여기 화살표 왜 빨강색이야 무섭게 ㄷㄷ
+      head->left->color = RBTREE_BLACK; // 여기 화살표 왜 빨강색이야 무섭게 ㄷㄷ
     }
     // 한 칸씩 내려가기
     ggp = gp;
@@ -89,7 +98,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   curr->key = key;
   curr->color = RBTREE_RED;
 
-  if (key > p->key && p != t->root)
+  if (key > p->key && p != head)
     p->right = curr;
   else
     p->left = curr;
@@ -106,8 +115,9 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   }
 
   // root는 항상 검정으로
-  t->root->left->color = RBTREE_BLACK;
+  head->left->color = RBTREE_BLACK;
 
+  head_node_to_t_root(t);
   return curr;
 }
 
@@ -115,7 +125,7 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
 {
   node_t *search_point;
   // curr = (node_t *)t->root->left;
-  search_point = (node_t *)t->root->left;
+  search_point = (node_t *)head->left;
 
   while (search_point)
   {
@@ -136,7 +146,7 @@ node_t *rbtree_min(const rbtree *t)
 {
   // TODO: implement find
   node_t *min_pointer;
-  min_pointer = t->root->left;
+  min_pointer = head->left;
 
   while (min_pointer && min_pointer->left)
   {
@@ -151,7 +161,7 @@ node_t *rbtree_max(const rbtree *t)
 {
   // TODO: implement find
   node_t *max_pointer;
-  max_pointer = t->root->left;
+  max_pointer = head->left;
 
   while (max_pointer && max_pointer->right)
   {
@@ -166,8 +176,8 @@ int rbtree_erase(rbtree *t, node_t *p)
 {
   node_t *delgp, *delp, *del, *sib;
   key_t value = p->key;
-  delgp = delp = t->root;
-  del = t->root->left;
+  delgp = delp = head;
+  del = head->left;
   sib = 0; // sib = NULL??
   while (isLeafNode(del) == false)
   {
@@ -183,7 +193,7 @@ int rbtree_erase(rbtree *t, node_t *p)
           sib = delp->right;
       }
     }
-    if (del != t->root->left && is2Node(del) == true)
+    if (del != head->left && is2Node(del) == true)
     {
       // root 가 아니고 2노드이면 부풀려줘야함
       if (borrowKey(t, delgp, delp, del, sib) == false)
@@ -221,7 +231,7 @@ int rbtree_erase(rbtree *t, node_t *p)
         sib = delp->right;
     }
   }
-  if (del != t->root->left && is2Node(del))
+  if (del != head->left && is2Node(del))
   {
     if (!borrowKey(t, delgp, delp, del, sib))
       bindNode(delp);
@@ -229,10 +239,12 @@ int rbtree_erase(rbtree *t, node_t *p)
 
   if (delLeafNode(t, value, delp, del))
   {
+    head_node_to_t_root(t);
     return true;
   }
   else
   {
+    head_node_to_t_root(t);
     return false;
   }
 }
@@ -247,7 +259,7 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
 node_t *rotate(rbtree *t, const key_t key, node_t *pivot)
 {
   node_t *child, *gchild;
-  if ((key > pivot->key || key == pivot->key) && pivot != t->root)
+  if ((key > pivot->key || key == pivot->key) && pivot != head)
     child = (node_t *)pivot->right;
   else
     child = (node_t *)pivot->left;
@@ -264,7 +276,7 @@ node_t *rotate(rbtree *t, const key_t key, node_t *pivot)
     child->left = gchild->right;
     gchild->right = (node_t *)child;
   }
-  if ((key > pivot->key || key == pivot->key) && pivot != t->root)
+  if ((key > pivot->key || key == pivot->key) && pivot != head)
     pivot->right = gchild;
   else
     pivot->left = gchild;
@@ -342,8 +354,8 @@ bool borrowKey(rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib)
   del->color = RBTREE_RED;
   delp->color = RBTREE_BLACK;
 
-  if (t->root->left->color == RBTREE_RED)
-    t->root->left->color = RBTREE_BLACK;
+  if (head->left->color == RBTREE_RED)
+    head->left->color = RBTREE_BLACK;
   return true;
 }
 
@@ -370,7 +382,7 @@ bool delLeafNode(rbtree *t, key_t key, node_t *delp, node_t *del)
   {
     // (no child)
     free(del);
-    if ((key > delp->key || key == delp->key) && delp != t->root)
+    if ((key > delp->key || key == delp->key) && delp != head)
       delp->right = NULL;
     else
       delp->left = NULL;
@@ -393,7 +405,7 @@ bool delLeafNode(rbtree *t, key_t key, node_t *delp, node_t *del)
       ret->color = RBTREE_BLACK;
       free(del);
     }
-    if ((ret->key > delp->key || ret->key == delp->key) && delp != t->root)
+    if ((ret->key > delp->key || ret->key == delp->key) && delp != head)
       delp->right = ret;
     else
       delp->left = ret;
@@ -416,4 +428,18 @@ bool delLeafNode(rbtree *t, key_t key, node_t *delp, node_t *del)
     return false;
   }
 }
-// void removeSubtree(node_t *pNode);
+
+void deleteAll(node_t *p)
+{
+  if (p != NULL)
+  {
+    deleteAll(p->left);
+    deleteAll(p->right);
+    free(p);
+  }
+}
+
+void *head_node_to_t_root(rbtree *t)
+{
+  t->root = head->left;
+}

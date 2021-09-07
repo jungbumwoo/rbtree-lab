@@ -19,7 +19,7 @@ void test_insert_single(const key_t key)
   rbtree *t = new_rbtree();
   node_t *p = rbtree_insert(t, key);
   assert(p != NULL);
-  assert(t->root != p);
+  assert(t->root == p);
   assert(p->key == key);
   //////// assert(p->color == RBTREE_BLACK);  // color of root node should be black
   assert(p->left == NULL);
@@ -52,11 +52,11 @@ void test_erase_root(const key_t key)
   rbtree *t = new_rbtree();
   node_t *p = rbtree_insert(t, key);
   assert(p != NULL);
-  assert(t->root != p);
+  assert(t->root == p);
   assert(p->key == key);
 
   rbtree_erase(t, p);
-  assert(t->root->left == NULL); // jb의 수정부분
+  assert(t->root == NULL); // jb의 수정부분
 
   delete_rbtree(t);
 }
@@ -279,7 +279,7 @@ int main(void)
   test_find_single(512, 1024);
   test_erase_root(128);
   test_minmax_suite();
-  // test_distinct_values();
-  // test_duplicate_values();
+  test_distinct_values();
+  test_duplicate_values();
   printf("Passed all tests!\n");
 }
