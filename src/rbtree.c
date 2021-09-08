@@ -77,7 +77,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
         if ((key > gp->key) != (key > p->key))
           p = rotate(t, key, gp);
         curr = rotate(t, key, ggp);
-        curr->color = RBTREE_RED;
+        curr->color = RBTREE_BLACK;
       }
 
       // 뿌리는 항상 검정
@@ -111,7 +111,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
     if ((key > gp->key) != (key > p->key))
       p = rotate(t, key, gp);
     curr = rotate(t, key, ggp);
-    curr->color = RBTREE_RED;
+    curr->color = RBTREE_BLACK;
   }
 
   // root는 항상 검정으로
