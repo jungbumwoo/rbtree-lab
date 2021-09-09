@@ -19,7 +19,9 @@ key_t swapKey(node_t *del);
 bool borrowKey(rbtree *t, node_t *delgp, node_t *delp, node_t *del, node_t *sib);
 void bindNode(node_t *delp);
 void removeSubtree(node_t *pNode);
-/* */
+
+/* inorder */
+void inorder(node_t *r, key_t *get_arr);
 
 rbtree *new_rbtree(void)
 {
@@ -252,6 +254,7 @@ int rbtree_erase(rbtree *t, node_t *p)
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
 {
   // TODO: implement to_array
+  inorder(t->root, arr);
   return 0;
 }
 
@@ -442,4 +445,18 @@ void deleteAll(node_t *p)
 void *head_node_to_t_root(rbtree *t)
 {
   t->root = head->left;
+}
+
+int count = 0;
+
+void inorder(node_t *r, key_t *get_arr)
+{
+  if (r != NULL)
+  {
+    inorder(r->left, get_arr);
+    /* */
+    get_arr[count] = r->key;
+    count++;
+    inorder(r->right, get_arr);
+  }
 }
